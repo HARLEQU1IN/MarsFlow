@@ -1,0 +1,6 @@
+Included artifacts in repository:
+- MarsFlow-web.zip (release web build)
+- mars_flow.app (release macOS app bundle)
+
+Not in git history due GitHub 100MB limit:
+- Android APK (available locally at build/app/outputs/flutter-apk/)
