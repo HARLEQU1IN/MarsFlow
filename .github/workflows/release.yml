@@ -13,7 +13,19 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
+  release_init:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! gh release view "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            gh release create "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --title "${GITHUB_REF_NAME}" --notes ""
+          fi
+
   android:
+    needs: [release_init]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -28,12 +40,12 @@ jobs:
       - run: flutter gen-l10n
       - run: flutter build apk --release --target-platform android-arm64
       - run: cp build/app/outputs/flutter-apk/app-release.apk MarsFlow-android-release.apk
-      - uses: actions/upload-artifact@v5
-        with:
-          name: android-apk
-          path: MarsFlow-android-release.apk
+      - env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${GITHUB_REF_NAME}" MarsFlow-android-release.apk --repo "${GITHUB_REPOSITORY}" --clobber
 
   web:
+    needs: [release_init]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -45,12 +57,12 @@ jobs:
       - run: flutter gen-l10n
       - run: flutter build web --release
       - run: cd build/web && zip -r ../../MarsFlow-web.zip .
-      - uses: actions/upload-artifact@v5
-        with:
-          name: web-zip
-          path: MarsFlow-web.zip
+      - env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${GITHUB_REF_NAME}" MarsFlow-web.zip --repo "${GITHUB_REPOSITORY}" --clobber
 
   macos:
+    needs: [release_init]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
@@ -62,12 +74,12 @@ jobs:
       - run: flutter gen-l10n
       - run: flutter build macos --release
       - run: cd build/macos/Build/Products/Release && zip -r ../../../../../MarsFlow-macos-app.zip mars_flow.app
-      - uses: actions/upload-artifact@v5
-        with:
-          name: macos-zip
-          path: MarsFlow-macos-app.zip
+      - env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${GITHUB_REF_NAME}" MarsFlow-macos-app.zip --repo "${GITHUB_REPOSITORY}" --clobber
 
   windows:
+    needs: [release_init]
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5
@@ -80,12 +92,13 @@ jobs:
       - run: flutter build windows --release
       - shell: pwsh
         run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath MarsFlow-windows.zip
-      - uses: actions/upload-artifact@v5
-        with:
-          name: windows-zip
-          path: MarsFlow-windows.zip
+      - shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "$env:GITHUB_REF_NAME" MarsFlow-windows.zip --repo "$env:GITHUB_REPOSITORY" --clobber
 
   linux:
+    needs: [release_init]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -99,31 +112,13 @@ jobs:
       - run: flutter gen-l10n
       - run: flutter build linux --release
       - run: cd build/linux/x64/release/bundle && zip -r ../../../../../MarsFlow-linux.zip .
-      - uses: actions/upload-artifact@v5
-        with:
-          name: linux-zip
-          path: MarsFlow-linux.zip
+      - env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${GITHUB_REF_NAME}" MarsFlow-linux.zip --repo "${GITHUB_REPOSITORY}" --clobber
 
   release:
     needs: [android, web, macos, windows, linux]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - uses: actions/download-artifact@v5
-        with:
-          path: artifacts
-      - run: |
-          mkdir out
-          cp artifacts/android-apk/MarsFlow-android-release.apk out/
-          cp artifacts/web-zip/MarsFlow-web.zip out/
-          cp artifacts/macos-zip/MarsFlow-macos-app.zip out/
-          cp artifacts/windows-zip/MarsFlow-windows.zip out/
-          cp artifacts/linux-zip/MarsFlow-linux.zip out/
-      - env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
-            gh release upload "${GITHUB_REF_NAME}" out/* --clobber
-          else
-            gh release create "${GITHUB_REF_NAME}" out/* --title "${GITHUB_REF_NAME}" --notes ""
-          fi
+      - run: echo "Release assets uploaded by platform jobs"
