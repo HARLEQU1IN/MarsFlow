@@ -24,9 +24,6 @@ macos/Flutter/ephemeral/
 windows/flutter/ephemeral/
 linux/flutter/ephemeral/
 
-### Generated / temp
-**/*.g.dart
-
 ### Keep distributables
 !dist/**
 # Miscellaneous

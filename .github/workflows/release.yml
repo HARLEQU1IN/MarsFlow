@@ -18,6 +18,8 @@ jobs:
         with:
           channel: stable
       - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: flutter gen-l10n
       - run: flutter build apk --release --target-platform android-arm64
       - run: cp build/app/outputs/flutter-apk/app-release.apk MarsFlow-android-release.apk
       - uses: actions/upload-artifact@v4
@@ -33,6 +35,8 @@ jobs:
         with:
           channel: stable
       - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: flutter gen-l10n
       - run: flutter build web --release
       - run: cd build/web && zip -r ../../MarsFlow-web.zip .
       - uses: actions/upload-artifact@v4
@@ -48,6 +52,8 @@ jobs:
         with:
           channel: stable
       - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: flutter gen-l10n
       - run: flutter build macos --release
       - run: cd build/macos/Build/Products/Release && zip -r ../../../../../MarsFlow-macos-app.zip mars_flow.app
       - uses: actions/upload-artifact@v4
@@ -63,6 +69,8 @@ jobs:
         with:
           channel: stable
       - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: flutter gen-l10n
       - run: flutter build windows --release
       - shell: pwsh
         run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath MarsFlow-windows.zip
@@ -81,6 +89,8 @@ jobs:
       - run: sudo apt-get update
       - run: sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
       - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: flutter gen-l10n
       - run: flutter build linux --release
       - run: cd build/linux/x64/release/bundle && zip -r ../../../../../MarsFlow-linux.zip .
       - uses: actions/upload-artifact@v4
