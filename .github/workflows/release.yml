@@ -1,0 +1,113 @@
+name: Release Builds
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter build apk --release --target-platform android-arm64
+      - run: cp build/app/outputs/flutter-apk/app-release.apk MarsFlow-android-release.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: MarsFlow-android-release.apk
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter build web --release
+      - run: cd build/web && zip -r ../../MarsFlow-web.zip .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-zip
+          path: MarsFlow-web.zip
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter build macos --release
+      - run: cd build/macos/Build/Products/Release && zip -r ../../../../../MarsFlow-macos-app.zip mars_flow.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-zip
+          path: MarsFlow-macos-app.zip
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter build windows --release
+      - shell: pwsh
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath MarsFlow-windows.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-zip
+          path: MarsFlow-windows.zip
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: sudo apt-get update
+      - run: sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+      - run: flutter pub get
+      - run: flutter build linux --release
+      - run: cd build/linux/x64/release/bundle && zip -r ../../../../../MarsFlow-linux.zip .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-zip
+          path: MarsFlow-linux.zip
+
+  release:
+    needs: [android, web, macos, windows, linux]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - run: |
+          mkdir out
+          cp artifacts/android-apk/MarsFlow-android-release.apk out/
+          cp artifacts/web-zip/MarsFlow-web.zip out/
+          cp artifacts/macos-zip/MarsFlow-macos-app.zip out/
+          cp artifacts/windows-zip/MarsFlow-windows.zip out/
+          cp artifacts/linux-zip/MarsFlow-linux.zip out/
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            out/MarsFlow-android-release.apk
+            out/MarsFlow-web.zip
+            out/MarsFlow-macos-app.zip
+            out/MarsFlow-windows.zip
+            out/MarsFlow-linux.zip

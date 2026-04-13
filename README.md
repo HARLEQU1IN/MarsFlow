@@ -2,6 +2,20 @@
 
 Offline-first workspace: notes (folders, tags, attachments), FTS5 search, tasks, local files, numbers directory, export/import. **No servers** — SQLite + local filesystem only.
 
+## Downloads
+
+- Latest alpha release: [v0.0.1-alpha](https://github.com/HARLEQU1IN/MarsFlow/releases/tag/v0.0.1-alpha)
+- Release assets include:
+  - `MarsFlow-android-release.apk`
+  - `MarsFlow-macos-app.zip`
+  - `MarsFlow-web.zip`
+
+### Quick install
+
+- Android: download `MarsFlow-android-release.apk` from Releases and install it on device.
+- macOS: unzip `MarsFlow-macos-app.zip`, move `mars_flow.app` to Applications, then launch.
+- Web: unzip `MarsFlow-web.zip` and host the folder with any static web server.
+
 ## Architecture (Clean)
 
 | Layer | Responsibility |
@@ -69,3 +83,13 @@ UI strings live in `lib/l10n/app_en.arb` and `lib/l10n/app_ru.arb`; the active l
 ```bash
 flutter test
 ```
+
+## Release Automation
+
+GitHub Actions workflow `.github/workflows/release.yml` builds artifacts on tag pushes (`v*`) and publishes a GitHub Release with attached files:
+
+- Android APK (`app-release.apk`)
+- Web bundle (`MarsFlow-web.zip`)
+- macOS app bundle archive (`MarsFlow-macos-app.zip`)
+- Windows portable zip (`MarsFlow-windows.zip`)
+- Linux bundle zip (`MarsFlow-linux.zip`)
